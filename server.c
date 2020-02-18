@@ -10,7 +10,7 @@
 struct Request{
 
 	char* type;
-	char* file;
+	char* path;
 	char* protocol;
 }client_request;
 
@@ -75,21 +75,26 @@ int main(int argc, char *argv[]){
 		//divide incoming string into tokens
 
 		char* token = strtok(client_message, " ");
-
+		int i = 1;
 		while (token != NULL) { 
-        		printf("%s\n", token);
+        	//	printf("%s, len - %d\n", token, strlen(token));
 			if(strcmp(token, "GET") == 0 || strcmp(token, "POST") == 0 || strcmp(token, "HEAD") == 0){
 				client_request.type = token;
 		}	
 			else if(strcmp(token, "HTTP/1.0") == 0){
+				//printf("message_token: %s\n", token);
 				client_request.protocol = token;
 		}
-			else{
-				client_request.file = token;
-		} 
-        		token = strtok(NULL, " "); 
+			else if(i == 2){
+				client_request.path = token;
+		}
+        		token = strtok(NULL, " ");
+			++i;
+			//clear_buffer(); 
     		}
-			printf("struct: %s %s %s \n", client_request.type, client_request.file, client_request.protocol);		 
+			printf("struct: %s %s %s \n", client_request.type, client_request.path, client_request.protocol);
+			fflush(stdin);
+			//fflush(stdout);		 
 }
 
 	if(read_size==0){
