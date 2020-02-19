@@ -25,11 +25,15 @@ char* get_filename(char* file){
 	return new_file;
 }
 
-//GET request implementation
+/*
+GET request implementation
+to-do: HEAD and POST
+*/
 void process_request(char* type, char* file){
 	FILE* f;
+	char* temp_filename = get_filename(file);	
 
-	if((f = fopen(get_filename(file), "r")) == NULL){
+	if((f = fopen(temp_filename,"r")) == NULL){
 		fprintf(stderr, "Can't resolve the file\n");
 		exit(2);
 	}
@@ -38,6 +42,7 @@ void process_request(char* type, char* file){
 		putchar(ch);
 		ch = getc(f);
 	}
+	free(temp_filename);
 }
 
 void clear_buffer(){
@@ -90,21 +95,19 @@ int main(int argc, char *argv[]){
 
 	//main loop to handle client requests
 	while((read_size = recv(client_sock, client_message, sizeof(client_message)-1,0)) > 0){
-		fflush(stdin);
 		if(strcmp(client_message, "\0") == 0){
 			printf("Empty message\n");
 		}
 		else{
 			puts(client_message);
 		}
-		fflush(stdin);
+		fflush(stdout);
 
 	//divide incoming string into tokens
 
 		char* token = strtok(client_message, " ");
 		int i = 1;
 		while (token != NULL) { 
-        	//	printf("%s, len - %d\n", token, strlen(token));
 			if(strcmp(token, "GET") == 0 || strcmp(token, "POST") == 0 || strcmp(token, "HEAD") == 0){
 				client_request.type = token;
 		}	
@@ -117,13 +120,10 @@ int main(int argc, char *argv[]){
 		}
         		token = strtok(NULL, " ");
 			++i;
-			//clear_buffer(); 
     		}
 			printf("struct: %s %s %s \n", client_request.type, client_request.path, client_request.protocol);
-			fflush(stdin);
+			fflush(stdout);
 			process_request(client_request.type, client_request.path);
-			//char* new_str = (get_filename(client_request.path));
-			//printf("new name is: %s\n", new_str);		 
 }
 	if(read_size==0){
        		 puts("Client disconnected");	
