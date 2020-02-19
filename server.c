@@ -8,11 +8,37 @@
 #include <regex.h>
 
 struct Request{
-
 	char* type;
 	char* path;
 	char* protocol;
 }client_request;
+
+/*
+INPUT: char* file contains name of a file that's being read as a part of client's request.
+char* file always starts with '/' character.
+OUTPUT: char* get_filename returns the name of file without '/' character. 
+*/
+char* get_filename(char* file){
+	char* new_file = (char*)malloc(strlen(file)-1);
+	strncpy(new_file, file + 1, strlen(file) - 1);
+
+	return new_file;
+}
+
+//GET request implementation
+void process_request(char* type, char* file){
+	FILE* f;
+
+	if((f = fopen(get_filename(file), "r")) == NULL){
+		fprintf(stderr, "Can't resolve the file\n");
+		exit(2);
+	}
+	char ch = getc(f);
+	while(ch != EOF){
+		putchar(ch);
+		ch = getc(f);
+	}
+}
 
 void clear_buffer(){
 	int c;
@@ -64,6 +90,7 @@ int main(int argc, char *argv[]){
 
 	//main loop to handle client requests
 	while((read_size = recv(client_sock, client_message, sizeof(client_message)-1,0)) > 0){
+		fflush(stdin);
 		if(strcmp(client_message, "\0") == 0){
 			printf("Empty message\n");
 		}
@@ -72,7 +99,7 @@ int main(int argc, char *argv[]){
 		}
 		fflush(stdin);
 
-		//divide incoming string into tokens
+	//divide incoming string into tokens
 
 		char* token = strtok(client_message, " ");
 		int i = 1;
@@ -81,12 +108,12 @@ int main(int argc, char *argv[]){
 			if(strcmp(token, "GET") == 0 || strcmp(token, "POST") == 0 || strcmp(token, "HEAD") == 0){
 				client_request.type = token;
 		}	
-			else if(strcmp(token, "HTTP/1.0") == 0){
-				//printf("message_token: %s\n", token);
-				client_request.protocol = token;
-		}
 			else if(i == 2){
-				client_request.path = token;
+                                client_request.path = token;
+                }
+
+			else if(i == 3){
+				client_request.protocol = token;
 		}
         		token = strtok(NULL, " ");
 			++i;
@@ -94,9 +121,10 @@ int main(int argc, char *argv[]){
     		}
 			printf("struct: %s %s %s \n", client_request.type, client_request.path, client_request.protocol);
 			fflush(stdin);
-			//fflush(stdout);		 
+			process_request(client_request.type, client_request.path);
+			//char* new_str = (get_filename(client_request.path));
+			//printf("new name is: %s\n", new_str);		 
 }
-
 	if(read_size==0){
        		 puts("Client disconnected");	
     }
