@@ -13,6 +13,40 @@ struct Request{
 	char* protocol;
 }client_request;
 
+
+/*
+Helper function needed for dynamic memory allocation
+Input: 123 (int - a number)
+Output: 3 (int - number of characters in number)
+*/
+int content_chars_length(int n){
+	int count;
+ 	while (n != 0) {
+       		 n /= 10;
+        	 ++count;
+    	}
+	return count;
+}
+
+/*
+Headers to be displayed to client when they receive a response from server
+*/
+void write_headers(int client_sock, int message_length){
+        struct tm strtime;
+        time_t timeoftheday;
+        struct tm *loc_time;
+        timeoftheday=time(NULL);
+        loc_time=localtime(&timeoftheday);
+	
+        write (client_sock,"\nHost-Name: 10.17.175.206",25);
+        write(client_sock,"\nContent-Length: 80",19);
+        write(client_sock,"\n",2);
+        write(client_sock,asctime(loc_time),strlen(asctime(loc_time)));
+        write(client_sock,"Content-type: txt/html\n",23);
+        write(client_sock,"\n",2);
+
+}
+
 /*
 INPUT: char* file contains name of a file that's being read as a part of client's request.
 char* file always starts with '/' character.
@@ -29,7 +63,7 @@ char* get_filename(char* file){
 GET request implementation
 to-do: HEAD and POST
 */
-void process_request(char* type, char* file){
+void process_request(int client_sock, char* type, char* file){
 	FILE* f;
 	char* temp_filename = get_filename(file);	
 
@@ -37,11 +71,17 @@ void process_request(char* type, char* file){
 		fprintf(stderr, "Can't resolve the file\n");
 		exit(2);
 	}
-	char ch = getc(f);
-	while(ch != EOF){
-		putchar(ch);
-		ch = getc(f);
+	char S[1000];
+
+	while(fgets(S, 1000, f) != NULL){
+
+		//printf("%s\n", S);
+		fflush(stdout);
 	}
+	write_headers(client_sock, strlen(S));
+	write(client_sock, S, strlen(S));
+	
+	fclose(f);
 	free(temp_filename);
 }
 
@@ -123,7 +163,7 @@ int main(int argc, char *argv[]){
     		}
 			printf("struct: %s %s %s \n", client_request.type, client_request.path, client_request.protocol);
 			fflush(stdout);
-			process_request(client_request.type, client_request.path);
+			process_request(client_sock, client_request.type, client_request.path);
 }
 	if(read_size==0){
        		 puts("Client disconnected");	
