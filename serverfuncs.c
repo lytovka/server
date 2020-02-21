@@ -1,5 +1,13 @@
 #include "server.h"
 
+void slice_str(const char * str, char * buffer, int start, int end)
+{
+    int j = 0;
+    for ( int i = start; i < end; i++, j++ ) {
+        buffer[j] = str[i];
+    }
+}
+
 /*
 Helper function needed for dynamic memory allocation
 Input: 123 (int - a number)
@@ -31,8 +39,8 @@ void write_headers(int client_sock, int message_length){
         timeoftheday=time(NULL);
         loc_time=localtime(&timeoftheday);
 	
-	char message [21];
-	sprintf(message, "\nContent-Length: %d", message_length);
+		char message [21];
+		sprintf(message, "\nContent-Length: %d", message_length);
 
         write (client_sock,"\nHost-Name: 10.17.175.206",25);
         write(client_sock,message,22);
@@ -101,6 +109,46 @@ void send_head(int client_sock, char* file){
 	free(temp_filename);
 }
 
+void send_post(int client_sock, char* file){
+	FILE *fp;
+	if((fp = fopen(get_filename(file),"w+")) == NULL){
+		fprintf(stderr, "Can't resolve the file\n");
+		exit(2);
+	}
+	char client_message2[1000];
+	char client_message3[1000];
+	int read_size;
+	if(fp != NULL){
+	while((read_size = recv(client_sock, client_message2, sizeof(client_message2),0 ))>0){
+                char *token2=strtok((client_message2),":");
+                char* secondLine=token2;
+                
+                
+                token2=strtok(NULL,":");
+                int contentLength=atoi(token2);
+
+                if(strcmp(secondLine,"Content-Length")==0){
+                    //printf("\n%s\n%s\n%d\n",200,file,contentLength);
+                    //fflush(stdout);
+					while((read_size = recv(client_sock, client_message3, sizeof(client_message3),0 ))>0){
+                        
+                            char toWrite[contentLength];
+                            slice_str(client_message3,toWrite,0,contentLength);
+                            
+                            fwrite(toWrite,sizeof(char),sizeof(toWrite),fp);
+                            //printf("Wrote: %s\nLength: %ld\n",toWrite, sizeof(toWrite));
+                    		//fflush(stdout);
+							fclose(fp);
+                            // write200(client_sock,httpType);
+                            write_headers(client_sock, contentLength);
+                            close(client_sock);
+                        }
+
+                    }
+                }
+	}
+}
+
 /*
 GET request implementation
 to-do: HEAD and POST
@@ -111,6 +159,9 @@ void process_request(int client_sock, char* type, char* file){
 	}
 	if(strcmp(type, "HEAD") == 0){
 		send_head(client_sock, file);
+	}
+	if(strcmp(type, "POST") == 0){
+		send_post(client_sock, file);
 	}
 }
 

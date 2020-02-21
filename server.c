@@ -67,21 +67,21 @@ int main(int argc, char *argv[]){
 		while (token != NULL) { 
 			if(strcmp(token, "GET") == 0 || strcmp(token, "POST") == 0 || strcmp(token, "HEAD") == 0){
 				client_request.type = token;
-		}	
+			}	
 			else if(i == 2){
-                                client_request.path = token;
-                }
+                client_request.path = token;
+            }
 
 			else if(i == 3){
 				client_request.protocol = token;
-		}
+			}
         		token = strtok(NULL, " ");
 			++i;
     		}
 			printf("struct: %s %s %s \n", client_request.type, client_request.path, client_request.protocol);
 			fflush(stdout);
 			process_request(client_sock, client_request.type, client_request.path);
-}
+		}
 	if(read_size==0){
        		 puts("Client disconnected");	
     }
