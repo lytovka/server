@@ -1,11 +1,4 @@
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
-#include <time.h> 
-#include <regex.h>
+#include "server.h"
 
 struct Request{
 	char* type;
@@ -13,82 +6,6 @@ struct Request{
 	char* protocol;
 }client_request;
 
-
-/*
-Helper function needed for dynamic memory allocation
-Input: 123 (int - a number)
-Output: 3 (int - number of characters in number)
-*/
-int content_chars_length(int n){
-	int count;
- 	while (n != 0) {
-       		 n /= 10;
-        	 ++count;
-    	}
-	return count;
-}
-
-/*
-Headers to be displayed to client when they receive a response from server
-*/
-void write_headers(int client_sock, int message_length){
-        struct tm strtime;
-        time_t timeoftheday;
-        struct tm *loc_time;
-        timeoftheday=time(NULL);
-        loc_time=localtime(&timeoftheday);
-	
-        write (client_sock,"\nHost-Name: 10.17.175.206",25);
-        write(client_sock,"\nContent-Length: 80",19);
-        write(client_sock,"\n",2);
-        write(client_sock,asctime(loc_time),strlen(asctime(loc_time)));
-        write(client_sock,"Content-type: txt/html\n",23);
-        write(client_sock,"\n",2);
-
-}
-
-/*
-INPUT: char* file contains name of a file that's being read as a part of client's request.
-char* file always starts with '/' character.
-OUTPUT: char* get_filename returns the name of file without '/' character. 
-*/
-char* get_filename(char* file){
-	char* new_file = (char*)malloc(strlen(file)-1);
-	strncpy(new_file, file + 1, strlen(file) - 1);
-
-	return new_file;
-}
-
-/*
-GET request implementation
-to-do: HEAD and POST
-*/
-void process_request(int client_sock, char* type, char* file){
-	FILE* f;
-	char* temp_filename = get_filename(file);	
-
-	if((f = fopen(temp_filename,"r")) == NULL){
-		fprintf(stderr, "Can't resolve the file\n");
-		exit(2);
-	}
-	char S[1000];
-
-	while(fgets(S, 1000, f) != NULL){
-
-		//printf("%s\n", S);
-		fflush(stdout);
-	}
-	write_headers(client_sock, strlen(S));
-	write(client_sock, S, strlen(S));
-	
-	fclose(f);
-	free(temp_filename);
-}
-
-void clear_buffer(){
-	int c;
-	while ((c = getchar()) != '\n' && c != EOF) { }
-}
 
 int main(int argc, char *argv[]){
 
